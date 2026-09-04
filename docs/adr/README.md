@@ -12,7 +12,7 @@ tradeoffs accepted with each choice.
 | [0005](0005-merge-based-idempotency.md) | Use merge-based Silver idempotency | Proposed |
 | [0006](0006-packaged-pyspark-transforms.md) | Package PySpark transformations as Python modules | Proposed |
 | [0007](0007-asset-bundles-and-github-actions.md) | Deploy with Asset Bundles and GitHub Actions | Proposed |
-| [0008](0008-exposure-adjusted-failure-rate.md) | Publish an exposure-adjusted failure rate | Proposed |
+| [0008](0008-exposure-adjusted-failure-rate.md) | Publish an exposure-adjusted failure rate | Accepted |
 
 Accepted records are immutable except for spelling and link corrections. A decision
 that changes an accepted record is documented in a new ADR that supersedes it.
