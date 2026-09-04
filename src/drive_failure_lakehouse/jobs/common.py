@@ -162,15 +162,6 @@ def active_spark_session() -> SparkSession:
     return spark
 
 
-def prepare_managed_resources(spark: SparkSession, config: JobConfig) -> None:
-    """Create the schemas and managed landing volume required by the pipeline."""
-    for schema in (config.bronze_schema, config.silver_schema, config.gold_schema):
-        spark.sql(f"CREATE SCHEMA IF NOT EXISTS {config.catalog}.{schema}")
-    spark.sql(
-        f"CREATE VOLUME IF NOT EXISTS {config.catalog}.{config.bronze_schema}.{config.volume}"
-    )
-
-
 def configure_logging() -> None:
     """Use a compact log format shared by all wheel-task entry points."""
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s %(message)s")

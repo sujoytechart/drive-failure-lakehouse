@@ -11,7 +11,6 @@ from drive_failure_lakehouse.jobs.common import (
     active_spark_session,
     configure_logging,
     parse_job_config,
-    prepare_managed_resources,
 )
 from drive_failure_lakehouse.silver import BUSINESS_KEYS, SilverFrames, build_silver_records
 
@@ -53,7 +52,6 @@ def select_publishable_frames(frames: SilverFrames) -> tuple[DataFrame, DataFram
 
 def run_silver(spark: SparkSession, config: JobConfig) -> None:
     """Transform Bronze, upsert trusted rows, and upsert rejected evidence."""
-    prepare_managed_resources(spark, config)
     bronze = spark.table(config.tables.bronze_raw)
     bronze_count = bronze.count()
     trusted, quarantine = select_publishable_frames(build_silver_records(bronze))

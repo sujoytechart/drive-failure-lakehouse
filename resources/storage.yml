@@ -1,0 +1,32 @@
+resources:
+  schemas:
+    bronze:
+      name: ${var.bronze_schema}
+      catalog_name: ${var.catalog}
+      comment: Raw drive telemetry and managed ingestion state
+      lifecycle:
+        prevent_destroy: true
+
+    silver:
+      name: ${var.silver_schema}
+      catalog_name: ${var.catalog}
+      comment: Trusted drive-day records and quarantine evidence
+      lifecycle:
+        prevent_destroy: true
+
+    gold:
+      name: ${var.gold_schema}
+      catalog_name: ${var.catalog}
+      comment: Consumption-ready drive reliability metrics
+      lifecycle:
+        prevent_destroy: true
+
+  volumes:
+    drive_failure_files:
+      name: ${var.volume}
+      catalog_name: ${var.catalog}
+      schema_name: ${resources.schemas.bronze.name}
+      volume_type: MANAGED
+      comment: Source samples and durable Auto Loader state
+      lifecycle:
+        prevent_destroy: true

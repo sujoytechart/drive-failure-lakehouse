@@ -13,7 +13,6 @@ from drive_failure_lakehouse.jobs.common import (
     active_spark_session,
     configure_logging,
     parse_job_config,
-    prepare_managed_resources,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -47,7 +46,6 @@ def validate_gold_metrics(daily: DataFrame, period: DataFrame) -> None:
 
 def run_gold(spark: SparkSession, config: JobConfig) -> None:
     """Build and atomically replace both consumption-ready Gold tables."""
-    prepare_managed_resources(spark, config)
     silver = spark.table(config.tables.silver_drive_daily)
     silver_count = silver.count()
     daily = build_daily_metrics(silver)

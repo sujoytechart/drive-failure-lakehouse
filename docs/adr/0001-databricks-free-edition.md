@@ -5,8 +5,8 @@
 
 ## Context
 
-This project needs a reproducible Databricks environment for learning and portfolio
-demonstration without requiring ongoing cloud infrastructure charges. The workload
+This project needs a reproducible Databricks environment for technical evaluation
+without requiring ongoing cloud infrastructure charges. The workload
 is a bounded sample of public drive telemetry rather than a production service with
 availability or support commitments.
 
@@ -32,8 +32,8 @@ wheel job validates the actual Databricks boundary before the full workflow is r
 ### Databricks free trial
 
 A trial can expose more platform features for a limited period, but it introduces an
-expiration deadline and can require billing-related setup. It remains a fallback if a
-specific capability required by the design is unavailable in Free Edition.
+expiration deadline and can require billing-related setup. The selected pipeline does
+not require that additional environment.
 
 ### Paid Databricks workspace
 
@@ -57,6 +57,8 @@ Databricks deployment automation.
   DBFS access, and does not expose the classic Spark UI. These constraints favor
   DataFrame APIs, safe casts, Unity Catalog storage, and application-level metrics.
 - Managed storage avoids cloud credentials and external-location configuration.
+- The bundle owns the project schemas and Volume. Destruction protection prevents an
+  ordinary bundle teardown from deleting their data; intentional cleanup is manual.
 - The bundle and core code remain portable to a fuller Databricks workspace, but
   production identity, network, observability, and recovery controls would require
   additional design.

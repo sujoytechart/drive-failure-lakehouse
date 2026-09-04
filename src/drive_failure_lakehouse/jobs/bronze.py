@@ -11,7 +11,6 @@ from drive_failure_lakehouse.jobs.common import (
     active_spark_session,
     configure_logging,
     parse_job_config,
-    prepare_managed_resources,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -53,6 +52,7 @@ def build_bronze_stream(spark: SparkSession, config: JobConfig) -> DataFrame:
         .option("cloudFiles.schemaLocation", config.schema_path)
         .option("cloudFiles.inferColumnTypes", "false")
         .option("rescuedDataColumn", "_rescued_data")
+        .option("pathGlobFilter", "*.csv")
         .option("header", "true")
         .load(config.landing_path)
     )
@@ -66,7 +66,6 @@ def build_bronze_stream(spark: SparkSession, config: JobConfig) -> DataFrame:
 
 def run_bronze(spark: SparkSession, config: JobConfig) -> None:
     """Process all newly discovered landing files and stop when caught up."""
-    prepare_managed_resources(spark, config)
     query = (
         build_bronze_stream(spark, config)
         .writeStream.format("delta")
