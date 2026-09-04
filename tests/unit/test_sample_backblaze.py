@@ -3,6 +3,8 @@ import hashlib
 import json
 from pathlib import Path
 
+import pytest
+
 from drive_failure_lakehouse.sample import sample_release
 
 
@@ -53,3 +55,31 @@ def test_samples_files_deterministically_and_writes_manifest(tmp_path: Path) -> 
         ["2024-01-01", "A-1", "0"],
         ["2024-01-01", "A-2", "0"],
     ]
+
+
+def test_discovers_csv_files_below_an_extracted_archive_directory(tmp_path: Path) -> None:
+    input_dir = tmp_path / "extracted"
+    nested_dir = input_dir / "data_Q1_2019"
+    nested_dir.mkdir(parents=True)
+    write_csv(
+        nested_dir / "2019-01-01.csv",
+        [["date", "serial_number", "failure"], ["2019-01-01", "A", "0"]],
+    )
+
+    sample_release(input_dir, tmp_path / "samples", "2019-Q1-r1", rows_per_file=10)
+
+    assert (tmp_path / "samples/release=2019-Q1-r1/2019-01-01.csv").exists()
+
+
+def test_rejects_duplicate_csv_names_from_nested_directories(tmp_path: Path) -> None:
+    input_dir = tmp_path / "extracted"
+    for directory_name in ("first", "second"):
+        directory = input_dir / directory_name
+        directory.mkdir(parents=True)
+        write_csv(
+            directory / "day.csv",
+            [["date", "serial_number", "failure"], ["2024-01-01", "A", "0"]],
+        )
+
+    with pytest.raises(ValueError, match="Duplicate CSV file names"):
+        sample_release(input_dir, tmp_path / "samples", "2024-Q1-r1", rows_per_file=10)

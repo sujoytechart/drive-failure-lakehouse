@@ -5,6 +5,7 @@ import csv
 import hashlib
 import json
 import re
+from collections import Counter
 from pathlib import Path
 from typing import Any, Final
 
@@ -28,9 +29,17 @@ def sample_release(
     if rows_per_file < 1:
         raise ValueError("rows_per_file must be positive")
 
-    source_files = sorted(input_dir.glob("*.csv"), key=lambda path: path.name)
+    source_files = sorted(
+        input_dir.rglob("*.csv"),
+        key=lambda path: path.relative_to(input_dir).as_posix(),
+    )
     if not source_files:
         raise ValueError(f"No CSV files found in {input_dir}")
+    duplicate_names = sorted(
+        name for name, count in Counter(path.name for path in source_files).items() if count > 1
+    )
+    if duplicate_names:
+        raise ValueError(f"Duplicate CSV file names: {', '.join(duplicate_names)}")
 
     release_directory = output_dir / f"release={release}"
     release_directory.mkdir(parents=True, exist_ok=True)
