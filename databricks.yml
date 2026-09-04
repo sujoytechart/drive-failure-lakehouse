@@ -1,0 +1,31 @@
+bundle:
+  name: drive-failure-lakehouse
+
+include:
+  - resources/*.yml
+
+artifacts:
+  default:
+    type: whl
+    build: uv build --wheel
+
+variables:
+  catalog:
+    description: Unity Catalog catalog used by the lakehouse
+    default: workspace
+  bronze_schema:
+    description: Schema for landing metadata and Bronze tables
+    default: drive_failure_bronze
+  silver_schema:
+    description: Schema for trusted and quarantined records
+    default: drive_failure_silver
+  gold_schema:
+    description: Schema for consumption-ready metrics
+    default: drive_failure_gold
+
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      root_path: ~/.bundle/${bundle.name}/${bundle.target}

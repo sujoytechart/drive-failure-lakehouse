@@ -9,6 +9,9 @@ description = "Databricks lakehouse pipeline for Backblaze drive telemetry"
 requires-python = ">=3.12,<3.13"
 dependencies = []
 
+[project.scripts]
+platform_smoke = "drive_failure_lakehouse.jobs.smoke:main"
+
 [project.optional-dependencies]
 dev = [
   "delta-spark>=4.0,<4.1",

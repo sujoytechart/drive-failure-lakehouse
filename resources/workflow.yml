@@ -1,0 +1,18 @@
+resources:
+  jobs:
+    platform_smoke:
+      name: ${bundle.target}-drive-failure-platform-smoke
+      tasks:
+        - task_key: platform_smoke
+          python_wheel_task:
+            package_name: drive_failure_lakehouse
+            entry_point: platform_smoke
+          environment_key: default
+          libraries:
+            - whl: ../dist/*.whl
+          max_retries: 1
+          min_retry_interval_millis: 30000
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "2"
