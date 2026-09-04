@@ -1,0 +1,2 @@
+date,serial_number,model,capacity_bytes,failure,smart_1_normalized,smart_1_raw,smart_5_normalized,smart_5_raw,smart_9_normalized,smart_9_raw,smart_187_normalized,smart_187_raw,smart_197_normalized,smart_197_raw,smart_198_normalized,smart_198_raw
+2024-01-02,SERIAL-2024-A,ST8000NM000A,8001563222016,0,100,0,100,0,91,8021,100,0,100,not-a-number,,

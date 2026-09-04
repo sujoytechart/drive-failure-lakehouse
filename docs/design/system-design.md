@@ -242,7 +242,7 @@ running when Silver fails.
 
 ```text
 src/drive_failure_lakehouse/
-  smart_attributes.py   changing wide SMART columns to a stable map
+  smart.py              changing wide SMART columns to a stable map
   quality.py            validation, warnings, and quarantine reasons
   silver.py             typing, conflict resolution, and trusted records
   gold.py               daily and reporting-period aggregations
