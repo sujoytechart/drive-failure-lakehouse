@@ -1,0 +1,46 @@
+name: Deploy Databricks bundle
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: databricks-dev-deployment
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Validate and deploy development bundle
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: databricks-dev
+    env:
+      DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+      DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Set up Databricks CLI
+        uses: databricks/setup-cli@v1.15.0
+
+      - name: Validate bundle
+        run: databricks bundle validate --target dev
+
+      - name: Deploy bundle
+        run: databricks bundle deploy --target dev
+
+      - name: Summarize deployed resources
+        run: databricks bundle summary --target dev
