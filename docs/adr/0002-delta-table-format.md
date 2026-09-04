@@ -30,8 +30,8 @@ the persistence boundary so transformation tests do not depend on table storage.
 Parquet is the columnar file format underneath many analytical tables, including
 Delta. A directory of Parquet files alone has no transaction log, atomic table
 commit, schema history, or native merge operation. Implementing those concerns with
-custom manifests would add failure modes without strengthening the portfolio use
-case.
+custom manifests would add failure modes without strengthening the required
+reliability guarantees.
 
 ### Apache Iceberg
 

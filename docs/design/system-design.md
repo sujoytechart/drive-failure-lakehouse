@@ -63,12 +63,10 @@ Bronze raw Delta table
         |
         v
 Silver trusted drive-day Delta table
-        |
-        v
-Gold daily model observations
-        |
-        v
-Gold reporting-period metrics
+        |                  |
+        v                  v
+Gold daily model     Gold reporting-period
+observations         metrics
 ```
 
 A Databricks Workflow runs the Bronze, Silver, and Gold tasks in dependency
@@ -89,8 +87,8 @@ flag. SMART attributes arrive as pairs such as `smart_5_raw` and
 Landing paths identify both the source quarter and revision:
 
 ```text
-/Volumes/<catalog>/<schema>/landing/release=2024-Q1-r1/
-/Volumes/<catalog>/<schema>/landing/release=2024-Q1-r2/
+/Volumes/<catalog>/<schema>/<volume>/landing/release=2024-Q1-r1/
+/Volumes/<catalog>/<schema>/<volume>/landing/release=2024-Q1-r2/
 ```
 
 Corrected files receive a new revision path. The original arrival is never
@@ -142,7 +140,7 @@ record contract.
 Before writing, Silver selects exactly one source row for each business key.
 Candidates are ordered by:
 
-1. source quarter and revision, with the latest applicable revision first;
+1. source revision, with the latest applicable revision first;
 2. file modification time, newest first; and
 3. source file path as a stable final tie-breaker.
 
@@ -183,9 +181,9 @@ consumption tables.
 `gold.drive_model_daily` has one row per `(date, model)` and publishes additive
 measurements:
 
-- `active_drive_count`
-- `failure_count`
-- `drive_days_at_risk`
+- `active_drives`
+- `failures`
+- `drive_days`
 
 One valid daily observation contributes one drive-day. The failure day is
 included because the drive was observed at risk during that reporting day.
@@ -229,9 +227,8 @@ The workflow fails rather than publishing questionable output when:
 - Gold produces negative counts or a rate with a non-positive denominator; or
 - a Delta transaction cannot commit.
 
-Every task reports input, accepted, rejected, inserted, updated, and output row
-counts where applicable. It also reports warning counts by reason. These
-metrics, task status, source release, and reporting window make a run
+Tasks report Auto Loader progress or relevant input and output row counts. Task
+status, source lineage, reporting window, and stable reason codes make a run
 understandable without inspecting individual records.
 
 Delta transactions provide atomic table changes. A failed task does not expose
@@ -258,6 +255,7 @@ tests/
 
 resources/
   workflow.yml          Databricks Workflow resource definition
+  storage.yml           Unity Catalog schemas and managed Volume
 ```
 
 Transformation modules accept and return Spark DataFrames and do not reach into
@@ -265,55 +263,45 @@ workspace APIs. Job entry points own platform configuration and table writes.
 This boundary supports fast local feedback without pretending local Spark and
 Databricks Runtime are identical.
 
-Jobs are packaged as Python wheel tasks. If Free Edition does not support
-serverless wheel tasks, thin notebook tasks import the same packaged
-transformation modules; business logic remains outside notebooks.
+Jobs are packaged as Python wheel tasks and run on serverless compute.
 
 ## Testing strategy
 
 GitHub Actions runs Ruff, mypy, pytest, and applicable local Delta integration
 tests. Tests cover behavior rather than implementation details:
 
-- two real source shapes produce the same Silver schema;
+- two representative source shapes produce the same Silver schema;
 - newly encountered SMART attributes become map entries;
 - critical invalid records receive explicit reasons;
 - optional malformed SMART readings produce warnings;
 - duplicate selection is deterministic;
-- replaying accepted and rejected input is idempotent;
+- replaying accepted input is idempotent;
 - a later release replaces the earlier business record;
 - daily and reporting-period metrics match hand-calculated examples; and
 - empty inputs and zero-denominator reporting windows behave explicitly.
 
-A Databricks smoke test validates the platform boundary with the representative
-sample. An end-to-end run and immediate rerun must produce the same Silver and
-Gold contents.
+A Databricks smoke task validates the active catalog and schema boundary. An
+end-to-end run and immediate rerun verify that Silver and Gold contents remain
+stable when no new files arrive.
 
 ## Delivery
 
 `.github/workflows/ci.yml` runs repository checks on pull requests and pushes.
 `.github/workflows/deploy.yml` validates and deploys the Asset Bundle when
-changes reach `main`. Deployment creates or updates resources but does not
-automatically run the data workflow, preserving Free Edition compute quota.
+manually dispatched. Deployment creates or updates resources but does not
+automatically run the data workflow.
 
 The data workflow is manually triggered for controlled executions. GitHub
 Secrets hold workspace authentication values and never enter source control.
-Production deployments use workload identity or a service principal. If Free
-Edition requires a personal token, the authentication ADR records that
-platform-specific constraint.
-
-Platform compatibility validation covers Volumes, Auto Loader, serverless jobs,
-Asset Bundle deployment, and GitHub Actions authentication. If Free Edition
-blocks a core capability, final integration uses the available 14-day
-Databricks trial rather than introducing a paid dependency. If only wheel tasks
-are blocked, the thin notebook fallback described above preserves the same
-architecture.
+A shared production deployment would use workload identity or a service principal
+instead of a personal development credential.
 
 ## Documentation
 
 The README introduces the real-world problem before platform terminology. It
 explains what one source row means, illustrates why observation time changes
-failure-rate interpretation, summarizes the architecture, and shows verified
-run evidence. Deeper design and decision documents contain implementation
+failure-rate interpretation, summarizes the architecture, and provides the
+validation runbook. Deeper design and decision documents contain implementation
 details and tradeoff analysis.
 
 Architecture decision records live in `docs/adr/` and contain status, context,
@@ -333,16 +321,3 @@ record set covers:
 
 The README links to the ADR index instead of duplicating their full tradeoff
 analysis.
-
-## Verification requirements
-
-- Local checks and GitHub Actions execute the same linting, type, and test
-  suite.
-- The Asset Bundle reproduces the Databricks Workflow from version-controlled
-  configuration.
-- The workflow executes Bronze, Silver, and Gold tasks in dependency order.
-- Two genuine source schemas normalize into the same Silver contract.
-- Invalid records remain inspectable with explicit rejection reasons.
-- Reprocessing unchanged input does not alter Silver or Gold.
-- A corrected release updates only the matching business records.
-- Gold measurements match independently calculated expected values.

@@ -7,8 +7,8 @@
 
 The Databricks jobs, dependencies, schedule, parameters, and wheel artifact must be
 reviewed and reproducible rather than assembled manually in the workspace. Deployment
-credentials must remain outside source control, and a learning workspace should not be
-changed automatically by every commit.
+credentials must remain outside source control, and a quota-limited development
+workspace should not be changed automatically by every commit.
 
 ## Decision
 
