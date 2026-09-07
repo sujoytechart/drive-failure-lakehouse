@@ -27,6 +27,11 @@ schemas without embedding account-specific values in source control.
 Local PySpark and Delta tests remain the primary fast feedback loop. A small packaged
 wheel job validates the actual Databricks boundary before the full workflow is run.
 
+Pin serverless jobs to environment version 4. It provides Python 3.12 and the Spark 4
+generation used by the local test environment, while retaining a published support
+window. Declare the project wheel once in each job's serverless environment rather than
+as task-level libraries, which serverless wheel tasks do not support.
+
 ## Alternatives considered
 
 ### Databricks free trial
@@ -56,6 +61,8 @@ Databricks deployment automation.
 - Serverless compute uses Spark Connect APIs, defaults to ANSI SQL behavior, limits
   DBFS access, and does not expose the classic Spark UI. These constraints favor
   DataFrame APIs, safe casts, Unity Catalog storage, and application-level metrics.
+- The serverless environment version is an explicit compatibility boundary. Upgrading
+  it requires rerunning the smoke job and the complete workflow before deployment.
 - Managed storage avoids cloud credentials and external-location configuration.
 - The bundle owns the project schemas and Volume. Destruction protection prevents an
   ordinary bundle teardown from deleting their data; intentional cleanup is manual.
