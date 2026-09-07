@@ -1,7 +1,6 @@
 # ADR 0008: Publish an exposure-adjusted failure rate
 
 - Status: Accepted
-- Date: 2026-09-03
 
 ## Context
 
@@ -19,7 +18,7 @@ use while representing this difference in exposure.
 The reporting-period table publishes both:
 
 - `naive_failed_drive_percentage`, calculated as distinct failed drives divided by
-  distinct observed drives, multiplied by 100; and
+  distinct observed drives, multiplied by 100
 - `failures_per_million_drive_days`, calculated as distinct failed drives divided by
   observed drive-day rows, multiplied by 1,000,000.
 

@@ -1,7 +1,6 @@
 # ADR 0007: Deploy with Asset Bundles and GitHub Actions
 
-- **Status:** Accepted
-- **Date:** 2026-09-03
+- Status: Accepted
 
 ## Context
 
@@ -14,8 +13,8 @@ workspace should not be changed automatically by every commit.
 
 Define Databricks resources in an Asset Bundle and deploy the development target with a
 manually dispatched GitHub Actions workflow. The workflow installs Python 3.12, `uv`,
-and the official Databricks CLI action; validates the bundle; deploys it; and prints a
-resource summary.
+and the official Databricks CLI action. It validates the bundle, deploys it, and prints
+a resource summary.
 
 Store `DATABRICKS_HOST` and `DATABRICKS_TOKEN` as secrets in a GitHub environment named
 `databricks-dev`. The workflow receives read-only repository permissions and serializes
@@ -33,7 +32,7 @@ local Spark and Delta tests, and coverage without cloud credentials.
   environment, but it can consume limited workspace quota and change cloud state without
   an explicit decision.
 - **Expose workspace secrets to pull-request validation:** provides earlier cloud
-  feedback, but unnecessarily expands credential exposure; local CI already validates
+  feedback, but unnecessarily expands credential exposure. Local CI already validates
   the code and transformation behavior.
 - **Use Terraform:** valuable for broader account and cloud infrastructure, but adds a
   second resource model where an Asset Bundle already owns these Databricks jobs.

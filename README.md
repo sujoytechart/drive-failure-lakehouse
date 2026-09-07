@@ -52,14 +52,14 @@ boundaries: incremental discovery, immutable source revisions, stable schemas, e
 rejection reasons, deterministic duplicate resolution, transactional writes, retries,
 tests, and version-controlled deployment.
 
-### Bronze — preserve what arrived
+### Bronze: preserve what arrived
 
 Auto Loader incrementally discovers CSV files in the landing Volume. Bronze retains raw
 source values, rescued data, file identity, modification time, ingestion time, source
 quarter, and source revision. Its checkpoint makes a normal rerun a no-op for files
 already processed.
 
-### Silver — decide what can be trusted
+### Silver: decide what can be trusted
 
 Silver validates core types and rules, then selects one record for each
 `(date, serial_number)`. A higher source revision wins, followed by file modification
@@ -76,7 +76,7 @@ smart_attributes["187"] = {raw: 0, normalized: 100}
 New S.M.A.R.T. attributes can therefore arrive without widening the trusted table on
 every release.
 
-### Gold — answer reliability questions
+### Gold: answer reliability questions
 
 `drive_model_daily` contains additive daily observations at `(date, model)` grain.
 `drive_model_period` contains one row per model for an explicit reporting window.
@@ -89,27 +89,49 @@ failures per million drive-days
   = 1,000,000 × failed drives / total observed drive-days
 ```
 
-The second measure accounts for observation time, but it is an incidence rate—not a
-lifetime failure probability or survival curve. Metrics produced from a bounded sample
+The second measure accounts for observation time, but it is an incidence rate. It is not
+a lifetime failure probability or survival curve. Metrics produced from a bounded sample
 describe that sample and should not be presented as fleet-wide Backblaze estimates.
 
 ## Engineering guarantees
 
-- **Schema drift:** Bronze evolves additively; Silver normalizes S.M.A.R.T. columns into
+- **Schema drift:** Bronze evolves additively. Silver normalizes S.M.A.R.T. columns into
   a typed map and exposes a stable public schema.
-- **Bad data:** critical violations are retained in quarantine; malformed optional
+- **Bad data:** critical violations are retained in quarantine. Malformed optional
   readings become non-fatal warning codes.
 - **Corrections:** immutable `release=YYYY-QN-rN` paths make source precedence explicit.
-- **Replay safety:** Silver and quarantine use Delta `MERGE`; Gold tables are fully
+- **Replay safety:** Silver and quarantine use Delta `MERGE`. Gold tables are fully
   derived and atomically replaced.
 - **Determinism:** revision, modification time, and file path define duplicate
-  precedence; unresolved top-ranked conflicts are quarantined.
+  precedence. Unresolved top-ranked conflicts are quarantined.
 - **Delivery:** typed wheel tasks and bundle resources are reviewed in Git, tested in CI,
   and deployed on demand through GitHub Actions.
 
-The detailed design is in [the system design](docs/design/system-design.md). Consequential
-tradeoffs—including Delta versus Iceberg or plain Parquet—are documented in the
-[architecture decision records](docs/adr/README.md).
+The detailed design is in [the system design](docs/design/system-design.md). The
+[architecture decision records](docs/adr/README.md) document consequential tradeoffs,
+including Delta versus Iceberg or plain Parquet.
+
+## Verified execution
+
+The project was deployed to Databricks Free Edition and exercised with a bounded sample
+of 300,000 Backblaze drive-day records. The three-task workflow completed from Bronze
+through Silver to Gold on serverless compute. A second run without new source files
+verified replay behavior: Auto Loader discovered no additional input, and the row counts
+in every published table remained unchanged.
+
+![Successful Bronze, Silver, and Gold replay in Databricks](docs/evidence/databricks-pipeline-replay-success.png)
+
+The Gold result exposes both raw failure counts and exposure-adjusted rates. This makes
+the output useful for comparison while keeping the observed drive-day denominator clear.
+
+![Gold drive failure metrics in Databricks SQL](docs/evidence/databricks-gold-failure-metrics.png)
+
+The same version-controlled Databricks Asset Bundle was validated and deployed from
+[GitHub Actions](https://github.com/sujoytechart/drive-failure-lakehouse/actions/workflows/deploy.yml).
+The workflow uses protected environment secrets. Credentials are not stored in the
+repository.
+
+![Successful Databricks bundle deployment from GitHub Actions](docs/evidence/github-actions-databricks-deploy-success.png)
 
 ## Repository map
 
@@ -121,6 +143,7 @@ tests/unit/                        transformation and contract behavior
 tests/integration/                 local Delta replay and correction behavior
 scripts/                           developer environment and sampling entry points
 docs/adr/                          architectural decisions and alternatives
+docs/evidence/                     verified Databricks and delivery runs
 ```
 
 ## Local development
@@ -144,8 +167,8 @@ and pushes to `main`.
 ## Create a bounded source sample
 
 The pipeline uses two distant quarters because their different S.M.A.R.T. columns
-exercise real schema drift. The official archives are large—approximately 571 MB for
-2019 Q1 and 1.01 GB for 2024 Q1—so they remain local and `data/` is ignored by Git.
+exercise real schema drift. The official archives are large, approximately 571 MB for
+2019 Q1 and 1.01 GB for 2024 Q1. They remain local and `data/` is ignored by Git.
 
 ```bash
 cd drive-failure-lakehouse
@@ -164,7 +187,7 @@ and row counts. It rejects duplicate file names rather than overwriting a sample
 
 For a minimal platform walkthrough without the large downloads, the two files in
 `tests/fixtures/` can be uploaded under the corresponding release directories. They use
-representative 2019 and 2024 schemas with synthetic rows; they are not analytical data.
+representative 2019 and 2024 schemas with synthetic rows. They are not analytical data.
 
 ## Deploy to Databricks
 

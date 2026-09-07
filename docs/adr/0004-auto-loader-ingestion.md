@@ -1,7 +1,6 @@
 # ADR 0004: Use Auto Loader for incremental file ingestion
 
-- **Status:** Accepted
-- **Date:** 2026-09-03
+- Status: Accepted
 
 ## Context
 

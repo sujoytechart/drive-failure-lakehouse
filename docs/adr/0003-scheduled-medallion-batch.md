@@ -1,7 +1,6 @@
 # ADR 0003: Use a scheduled medallion batch pipeline
 
-- **Status:** Accepted
-- **Date:** 2026-09-03
+- Status: Accepted
 
 ## Context
 
@@ -14,8 +13,8 @@ and trusted records must finish before reporting metrics are replaced.
 
 Use one Databricks Workflow with dependent Bronze, Silver, and Gold wheel tasks. Bronze
 uses a bounded incremental run, Silver performs deterministic upserts, and Gold rebuilds
-its fully derived reporting tables. A weekly schedule is declared but paused by default;
-manual runs remain available without consuming workspace quota unexpectedly.
+its fully derived reporting tables. A weekly schedule is declared but paused by default.
+Manual runs remain available without consuming workspace quota unexpectedly.
 
 ## Alternatives considered
 

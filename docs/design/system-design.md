@@ -1,10 +1,13 @@
 # Drive Failure Lakehouse System Design
 
-**Status:** Approved
+## Design approach
 
-**Date:** 2026-09-03
+I kept the data path deliberately small so the project remains understandable and can
+run in a free workspace. The engineering work is concentrated at the boundaries where
+schema drift, corrected releases, invalid records, replay safety, and metric definitions
+need explicit handling.
 
-## Purpose
+## Problem
 
 This project turns daily hard-drive health records into reliable tables that
 show how frequently each drive model fails. The pipeline runs on Databricks and
@@ -32,9 +35,8 @@ observations, and corrected data releases.
 - Predicting whether an individual drive will fail.
 - Estimating lifetime survival probability with Kaplan-Meier or another
   survival-analysis model.
-- Full-history ingestion; the default dataset is bounded to selected quarters.
-- Introducing streaming, Airflow, dbt, Terraform, or model serving where the
-  source and deliverable do not require them.
+- Full-history ingestion. The default dataset is bounded to selected quarters.
+- Adding orchestration or infrastructure layers that the batch workload does not need.
 - Enterprise service-level objectives, compliance controls, private networking,
   and production-scale capacity planning.
 
@@ -73,16 +75,16 @@ A Databricks Workflow runs the Bronze, Silver, and Gold tasks in dependency
 order. A Databricks Asset Bundle defines the jobs and their resources in source
 control. GitHub Actions runs repository quality checks and deploys the bundle.
 
-Additional infrastructure is excluded where it does not strengthen this batch
-pipeline. Schema handling, deterministic conflict resolution, atomic writes,
-validation, and run evidence provide the required operational guarantees.
+The design stays focused on the parts that affect data correctness. Those parts include
+schema handling, deterministic conflict resolution, atomic writes, validation, and run
+evidence.
 
 ## Source and landing layout
 
 Each input row represents one physical drive on one observation date. Core
 source fields include the date, serial number, model, capacity, and a failure
 flag. SMART attributes arrive as pairs such as `smart_5_raw` and
-`smart_5_normalized`; the set of attribute columns changes over time.
+`smart_5_normalized`. The set of attribute columns changes over time.
 
 Landing paths identify both the source quarter and revision:
 
@@ -123,9 +125,9 @@ identities.
 
 `silver.drive_daily` has one row per `(date, serial_number)` and contains:
 
-- typed core drive fields;
-- source and lineage metadata;
-- `quality_warnings`, an array of non-fatal warning codes; and
+- typed core drive fields
+- source and lineage metadata
+- `quality_warnings`, an array of non-fatal warning codes
 - `smart_attributes`, a map keyed by SMART attribute number whose value is a
   structure containing nullable `raw` and `normalized` numeric readings.
 
@@ -140,12 +142,12 @@ record contract.
 Before writing, Silver selects exactly one source row for each business key.
 Candidates are ordered by:
 
-1. source revision, with the latest applicable revision first;
-2. file modification time, newest first; and
+1. source revision, with the latest applicable revision first
+2. file modification time, newest first
 3. source file path as a stable final tie-breaker.
 
 If two rows remain indistinguishable under that ordering but disagree in their
-business values, neither is selected silently; the conflict is quarantined.
+business values, neither is selected silently. The conflict is quarantined.
 
 The selected source is applied with a Delta `MERGE` keyed by
 `(date, serial_number)`. New keys are inserted and later source revisions update
@@ -156,9 +158,9 @@ unchanged.
 
 `silver.drive_daily_quarantine` preserves rejected records with:
 
-- source identity and release metadata;
-- ingestion time;
-- the original row encoded without discarding source values; and
+- source identity and release metadata
+- ingestion time
+- the original row encoded without discarding source values
 - `rejection_reasons`, a non-empty array of stable reason codes.
 
 A deterministic quarantine identifier prevents the same rejected source row
@@ -222,9 +224,9 @@ drive-age, entry, and exit semantics.
 
 The workflow fails rather than publishing questionable output when:
 
-- required source columns are absent;
-- duplicate Silver keys remain after deterministic resolution;
-- Gold produces negative counts or a rate with a non-positive denominator; or
+- required source columns are absent
+- duplicate Silver keys remain after deterministic resolution
+- Gold produces negative counts or a rate with a non-positive denominator
 - a Delta transaction cannot commit.
 
 Tasks report Auto Loader progress or relevant input and output row counts. Task
@@ -259,9 +261,9 @@ resources/
 ```
 
 Transformation modules accept and return Spark DataFrames and do not reach into
-workspace APIs. Job entry points own platform configuration and table writes.
-This boundary supports fast local feedback without pretending local Spark and
-Databricks Runtime are identical.
+workspace APIs. Job entry points own platform configuration and table writes. This
+allows the transformation logic to be tested locally while platform-specific behavior
+is verified through Databricks smoke and end-to-end runs.
 
 Jobs are packaged as Python wheel tasks and run on serverless compute.
 
@@ -270,14 +272,14 @@ Jobs are packaged as Python wheel tasks and run on serverless compute.
 GitHub Actions runs Ruff, mypy, pytest, and applicable local Delta integration
 tests. Tests cover behavior rather than implementation details:
 
-- two representative source shapes produce the same Silver schema;
-- newly encountered SMART attributes become map entries;
-- critical invalid records receive explicit reasons;
-- optional malformed SMART readings produce warnings;
-- duplicate selection is deterministic;
-- replaying accepted input is idempotent;
-- a later release replaces the earlier business record;
-- daily and reporting-period metrics match hand-calculated examples; and
+- two representative source shapes produce the same Silver schema
+- newly encountered SMART attributes become map entries
+- critical invalid records receive explicit reasons
+- optional malformed SMART readings produce warnings
+- duplicate selection is deterministic
+- replaying accepted input is idempotent
+- a later release replaces the earlier business record
+- daily and reporting-period metrics match hand-calculated examples
 - empty inputs and zero-denominator reporting windows behave explicitly.
 
 A Databricks smoke task validates the active catalog and schema boundary. An
@@ -296,28 +298,16 @@ Secrets hold workspace authentication values and never enter source control.
 A shared production deployment would use workload identity or a service principal
 instead of a personal development credential.
 
-## Documentation
+## Architecture decisions
 
-The README introduces the real-world problem before platform terminology. It
-explains what one source row means, illustrates why observation time changes
-failure-rate interpretation, summarizes the architecture, and provides the
-validation runbook. Deeper design and decision documents contain implementation
-details and tradeoff analysis.
+The decisions that shape the implementation are documented separately so their context,
+alternatives, and consequences remain easy to review:
 
-Architecture decision records live in `docs/adr/` and contain status, context,
-decision drivers, options considered, rationale, positive and negative
-consequences, validation evidence, and reconsideration triggers. The decision
-record set covers:
-
-1. Databricks Free Edition and managed storage;
-2. Delta Lake versus Iceberg and raw Parquet;
-3. scheduled batch medallion processing versus streaming or external
-   orchestration;
-4. Auto Loader versus `COPY INTO` or a custom manifest;
-5. merge-based idempotency versus append or overwrite strategies;
-6. packaged transformations versus notebook-only code;
-7. Asset Bundles and GitHub Actions versus manual deployment; and
-8. exposure-adjusted incidence versus survival analysis.
-
-The README links to the ADR index instead of duplicating their full tradeoff
-analysis.
+1. [Databricks Free Edition and managed storage](../adr/0001-databricks-free-edition.md)
+2. [Delta Lake versus Iceberg and raw Parquet](../adr/0002-delta-table-format.md)
+3. [Scheduled batch processing versus streaming or external orchestration](../adr/0003-scheduled-medallion-batch.md)
+4. [Auto Loader versus `COPY INTO` or a custom manifest](../adr/0004-auto-loader-ingestion.md)
+5. [Merge-based idempotency versus append or overwrite strategies](../adr/0005-merge-based-idempotency.md)
+6. [Packaged transformations versus notebook-only code](../adr/0006-packaged-pyspark-transforms.md)
+7. [Asset Bundles and GitHub Actions versus manual deployment](../adr/0007-asset-bundles-and-github-actions.md)
+8. [Exposure-adjusted incidence versus survival analysis](../adr/0008-exposure-adjusted-failure-rate.md)
