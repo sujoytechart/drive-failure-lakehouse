@@ -20,7 +20,7 @@ def merge_delta_path(
     """Upsert unique source records into a Delta path using null-safe keys."""
     merge_keys = _validate_merge_source(source, keys)
     if not DeltaTable.isDeltaTable(spark, path):
-        source.write.format("delta").mode("errorifexists").save(path)
+        source.write.format("delta").mode("error").save(path)
         return
 
     target = DeltaTable.forPath(spark, path)
@@ -36,7 +36,7 @@ def merge_delta_table(
     """Upsert unique source records into a catalog-managed Delta table."""
     merge_keys = _validate_merge_source(source, keys)
     if not spark.catalog.tableExists(table_name):
-        source.write.format("delta").mode("errorifexists").saveAsTable(table_name)
+        source.write.format("delta").mode("error").saveAsTable(table_name)
         return
 
     target = DeltaTable.forName(spark, table_name)
