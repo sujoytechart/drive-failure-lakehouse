@@ -1,0 +1,2 @@
+date,serial_number,model,capacity_bytes,failure,smart_1_normalized,smart_1_raw,smart_5_normalized,smart_5_raw,smart_9_normalized,smart_9_raw
+2019-01-02,SERIAL-2019-A,ST4000DM000,4000787030016,0,100,0,100,0,92,7123

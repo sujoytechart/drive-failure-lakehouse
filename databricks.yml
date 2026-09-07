@@ -1,0 +1,43 @@
+bundle:
+  name: drive-failure-lakehouse
+
+experimental:
+  skip_name_prefix_for_schema: true
+
+include:
+  - resources/*.yml
+
+artifacts:
+  default:
+    type: whl
+    build: uv build --wheel
+
+variables:
+  catalog:
+    description: Unity Catalog catalog used by the lakehouse
+    default: workspace
+  bronze_schema:
+    description: Schema for landing metadata and Bronze tables
+    default: drive_failure_bronze
+  silver_schema:
+    description: Schema for trusted and quarantined records
+    default: drive_failure_silver
+  gold_schema:
+    description: Schema for consumption-ready metrics
+    default: drive_failure_gold
+  volume:
+    description: Managed Volume containing landing files and Auto Loader state
+    default: drive_failure_files
+  period_start:
+    description: Inclusive reporting window start date
+    default: "2019-01-01"
+  period_end:
+    description: Inclusive reporting window end date
+    default: "2024-03-31"
+
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      root_path: ~/.bundle/${bundle.name}/${bundle.target}
