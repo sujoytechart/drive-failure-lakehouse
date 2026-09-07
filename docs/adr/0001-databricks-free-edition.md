@@ -1,7 +1,6 @@
 # ADR 0001: Use Databricks Free Edition and managed storage
 
 - Status: Accepted
-- Date: 2026-09-03
 
 ## Context
 
@@ -57,7 +56,7 @@ Databricks deployment automation.
 - Free Edition provides only serverless compute and limits concurrent job tasks and
   daily usage. Quota exhaustion can pause compute until the quota resets.
 - Free Edition provides no guaranteed reliability, support, or service-level
-  agreement; the project makes no such claims.
+  agreement. The project makes no such claims.
 - Serverless compute uses Spark Connect APIs, defaults to ANSI SQL behavior, limits
   DBFS access, and does not expose the classic Spark UI. These constraints favor
   DataFrame APIs, safe casts, Unity Catalog storage, and application-level metrics.
@@ -65,7 +64,7 @@ Databricks deployment automation.
   it requires rerunning the smoke job and the complete workflow before deployment.
 - Managed storage avoids cloud credentials and external-location configuration.
 - The bundle owns the project schemas and Volume. Destruction protection prevents an
-  ordinary bundle teardown from deleting their data; intentional cleanup is manual.
+  ordinary bundle teardown from deleting their data. Intentional cleanup is manual.
 - The bundle and core code remain portable to a fuller Databricks workspace, but
   production identity, network, observability, and recovery controls would require
   additional design.

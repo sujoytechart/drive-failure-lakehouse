@@ -1,7 +1,6 @@
 # ADR 0002: Use Delta Lake as the table format
 
 - Status: Accepted
-- Date: 2026-09-03
 
 ## Context
 

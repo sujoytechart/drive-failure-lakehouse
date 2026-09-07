@@ -1,7 +1,6 @@
 # ADR 0006: Package PySpark transformations as Python modules
 
-- **Status:** Accepted
-- **Date:** 2026-09-03
+- Status: Accepted
 
 ## Context
 

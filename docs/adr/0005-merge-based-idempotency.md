@@ -1,7 +1,6 @@
 # ADR 0005: Use merge-based Silver idempotency
 
 - Status: Accepted
-- Date: 2026-09-03
 
 ## Context
 
@@ -16,7 +15,7 @@ Silver is written with a Delta `MERGE` keyed by `date` and `serial_number`.
 Quarantine uses the same operation keyed by deterministic `quarantine_id`.
 
 Before a merge begins, the source DataFrame must contain every merge key and must be
-unique on the complete key. Matching records update all target columns; new records
+unique on the complete key. Matching records update all target columns. New records
 are inserted. Source selection happens before persistence, using explicit revision,
 file timestamp, and filename precedence.
 
@@ -54,7 +53,7 @@ conflicts are quarantined rather than delegated to the engine.
 - Replaying identical accepted or rejected input does not increase target row counts.
 - Later corrections update only matching business keys.
 - Merge validation performs an additional distributed duplicate check.
-- Schema changes must be deliberate; `updateAll` and `insertAll` expect a compatible
+- Schema changes must be deliberate. `updateAll` and `insertAll` expect a compatible
   target contract.
 - Concurrent writers still rely on Delta optimistic concurrency and may require a
   workflow retry.
