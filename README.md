@@ -255,3 +255,7 @@ model. It does not claim production availability, compliance, private-networking
 fleet-wide statistical conclusions from the sampled data. The architecture can be
 extended to those requirements, but each would need its own operational and analytical
 design.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
